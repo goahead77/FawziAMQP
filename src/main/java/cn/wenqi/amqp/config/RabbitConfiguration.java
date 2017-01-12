@@ -2,10 +2,7 @@ package cn.wenqi.amqp.config;
 
 import cn.wenqi.amqp.service.OrderService;
 import cn.wenqi.amqp.service.impl.OrderServiceImpl;
-import org.springframework.amqp.core.AmqpAdmin;
-import org.springframework.amqp.core.AmqpTemplate;
-import org.springframework.amqp.core.MessageListener;
-import org.springframework.amqp.core.Queue;
+import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.annotation.EnableRabbit;
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
@@ -17,6 +14,8 @@ import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
 import org.springframework.amqp.rabbit.listener.adapter.MessageListenerAdapter;
 import org.springframework.amqp.rabbit.transaction.RabbitTransactionManager;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
+import org.springframework.amqp.support.converter.MessageConverter;
+import org.springframework.amqp.support.converter.SerializerMessageConverter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -37,9 +36,12 @@ public class RabbitConfiguration {
      * Listing permissions in vhost "/" ...
         fawzi	^fawzi-.*	.*	.*
      */
-    private final static String queueName="fawzi-sendEmail";
+    public final static String queueName="fawzi-sendEmail";
 
-    private final static String orderQueueName="fawzi-order";
+    public final static String orderQueueName="fawzi-order";
+
+    public final static String exchange="fawzi-direct-exchange";
+
 
     @Autowired
     private OrderService orderService;
@@ -118,8 +120,14 @@ public class RabbitConfiguration {
         factory.setConnectionFactory(connectionFactory());
         factory.setConcurrentConsumers(3);
         factory.setMaxConcurrentConsumers(10);
-        factory.setMessageConverter(new Jackson2JsonMessageConverter());
+        factory.setMessageConverter(messageConverter());
         return factory;
+    }
+
+    @Bean
+    MessageConverter messageConverter(){
+        MessageConverter messageConverter=new SerializerMessageConverter();
+        return messageConverter;
     }
 
     @Bean
@@ -127,21 +135,32 @@ public class RabbitConfiguration {
         SimpleMessageListenerContainer container = new SimpleMessageListenerContainer();
         container.setConnectionFactory(connectionFactory());
         container.setQueueNames(queueName,orderQueueName);
-        container.setMessageListener(new MessageListenerAdapter(orderService));
+        //container.setMessageListener(new MessageListenerAdapter(orderService));
         container.setConsumerArguments(Collections.singletonMap("x-priority", Integer.valueOf(10)));
         return container;
     }
 
-    @Bean
-    public MessageListener exampleListener() {
-        return message -> {
-            //            byte[] body=message.getBody();
+//    @Bean
+//    public MessageListener exampleListener() {
+//        return message -> {
+//                        byte[] body=message.getBody();
 //            Object o=SerializationUtils.deserialize(body);
 //            if(o instanceof MQModel){
 //                MQModel mq= (MQModel) o;
 //                System.out.println(mq.getId());
 //            }
-            System.out.println(message);
-        };
+//            System.out.println(message);
+//        };
+//    }
+
+
+    @Bean
+    public DirectExchange directExchange(){
+        return new DirectExchange(exchange);
+    }
+
+    @Bean
+    Binding binding(Queue orderQueue, DirectExchange directExchange) {
+        return BindingBuilder.bind(orderQueue).to(directExchange).with(orderQueueName);
     }
 }

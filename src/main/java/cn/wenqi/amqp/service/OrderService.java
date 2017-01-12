@@ -8,4 +8,6 @@ import cn.wenqi.amqp.entity.Order;
 public interface OrderService {
 
     void processOrder(Order order);
+
+    void analysisOrder(Order order);
 }
