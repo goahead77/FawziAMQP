@@ -23,7 +23,6 @@ public class OrderServiceTest extends TestBase{
         Order order=new Order();
         order.setGoodsId("good_"+ UUID.randomUUID().toString());
         order.setOrderId("order_"+UUID.randomUUID().toString());
-
         rabbitTemplate.convertAndSend(RabbitConfiguration.exchange,RabbitConfiguration.orderQueueName,order);
     }
 
