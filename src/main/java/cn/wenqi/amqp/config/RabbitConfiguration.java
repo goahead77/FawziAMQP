@@ -1,32 +1,67 @@
 package cn.wenqi.amqp.config;
 
-import org.springframework.amqp.core.*;
+import cn.wenqi.amqp.service.OrderService;
+import cn.wenqi.amqp.service.impl.OrderServiceImpl;
+import org.springframework.amqp.core.AmqpAdmin;
+import org.springframework.amqp.core.AmqpTemplate;
+import org.springframework.amqp.core.MessageListener;
+import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.annotation.EnableRabbit;
+import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
-import org.springframework.amqp.rabbit.connection.RabbitConnectionFactoryBean;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.amqp.rabbit.listener.RabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
+import org.springframework.amqp.rabbit.listener.adapter.MessageListenerAdapter;
+import org.springframework.amqp.rabbit.transaction.RabbitTransactionManager;
+import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.io.PathResource;
-import org.springframework.core.io.Resource;
 import org.springframework.retry.backoff.ExponentialBackOffPolicy;
 import org.springframework.retry.support.RetryTemplate;
+
+import java.util.Collections;
 
 /**
  * @author wenqi
  */
+@SuppressWarnings("SpringJavaAutowiringInspection")
 @Configuration
 @EnableRabbit
 public class RabbitConfiguration {
 
-    private final static String queueName="fawziQueue";
+    /**
+     * Listing permissions in vhost "/" ...
+        fawzi	^fawzi-.*	.*	.*
+     */
+    private final static String queueName="fawzi-sendEmail";
+
+    private final static String orderQueueName="fawzi-order";
+
+    @Autowired
+    private OrderService orderService;
+
+//    @Configuration
+//    static class RabbitListener{
+//
+//        @Bean
+//        public OrderService orderService(){
+//            return new OrderServiceImpl();
+//        }
+//
+//    }
     @Bean
     public ConnectionFactory connectionFactory() {
         CachingConnectionFactory cachingConnectionFactory = new CachingConnectionFactory();
-        cachingConnectionFactory.setHost("localhost");
+        cachingConnectionFactory.setHost("101.200.63.60");
+        cachingConnectionFactory.setUsername("xx");
+        cachingConnectionFactory.setPassword("xx");
+        cachingConnectionFactory.setPublisherReturns(true);
+        cachingConnectionFactory.setPublisherConfirms(true);
+        cachingConnectionFactory.setChannelCacheSize(50);
         return cachingConnectionFactory;
     }
 
@@ -41,17 +76,22 @@ public class RabbitConfiguration {
     }
 
     @Bean
-    public Queue myQueue() {
+    public Queue testQueue() {
         return new Queue(queueName);
     }
 
-    public RabbitConnectionFactoryBean clientConnectionFactory() {
-        RabbitConnectionFactoryBean rabbitConnectionFactoryBean = new RabbitConnectionFactoryBean();
-        rabbitConnectionFactoryBean.setUseSSL(true);
-        Resource resource = new PathResource("file:/secrets/rabbitSSL.properties");
-        rabbitConnectionFactoryBean.setSslPropertiesLocation(resource);
-        return rabbitConnectionFactoryBean;
+    @Bean
+    public Queue orderQueue(){
+        return new Queue(orderQueueName);
     }
+
+//    public RabbitConnectionFactoryBean clientConnectionFactory() {
+//        RabbitConnectionFactoryBean rabbitConnectionFactoryBean = new RabbitConnectionFactoryBean();
+//        rabbitConnectionFactoryBean.setUseSSL(true);
+//        Resource resource = new PathResource("file:/secrets/rabbitSSL.properties");
+//        rabbitConnectionFactoryBean.setSslPropertiesLocation(resource);
+//        return rabbitConnectionFactoryBean;
+//    }
 
     @Bean
     public AmqpTemplate retryRabbitTemplate() {
@@ -66,17 +106,42 @@ public class RabbitConfiguration {
         return template;
     }
 
+
+    @Bean
+    public RabbitTransactionManager rabbitTxManager(){
+        return new RabbitTransactionManager(connectionFactory());
+    }
+
+    @Bean
+    public RabbitListenerContainerFactory rabbitListenerContainerFactory() {
+        SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
+        factory.setConnectionFactory(connectionFactory());
+        factory.setConcurrentConsumers(3);
+        factory.setMaxConcurrentConsumers(10);
+        factory.setMessageConverter(new Jackson2JsonMessageConverter());
+        return factory;
+    }
+
     @Bean
     public SimpleMessageListenerContainer messageListenerContainer() {
         SimpleMessageListenerContainer container = new SimpleMessageListenerContainer();
         container.setConnectionFactory(connectionFactory());
-        container.setQueueNames(queueName);
-        container.setMessageListener(exampleListener());
+        container.setQueueNames(queueName,orderQueueName);
+        container.setMessageListener(new MessageListenerAdapter(orderService));
+        container.setConsumerArguments(Collections.singletonMap("x-priority", Integer.valueOf(10)));
         return container;
     }
 
     @Bean
     public MessageListener exampleListener() {
-        return message -> System.out.println("received: " + message);
+        return message -> {
+            //            byte[] body=message.getBody();
+//            Object o=SerializationUtils.deserialize(body);
+//            if(o instanceof MQModel){
+//                MQModel mq= (MQModel) o;
+//                System.out.println(mq.getId());
+//            }
+            System.out.println(message);
+        };
     }
 }
