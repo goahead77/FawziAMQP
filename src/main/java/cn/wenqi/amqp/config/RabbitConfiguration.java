@@ -1,7 +1,6 @@
 package cn.wenqi.amqp.config;
 
 import cn.wenqi.amqp.service.OrderService;
-import cn.wenqi.amqp.service.impl.OrderServiceImpl;
 import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.annotation.EnableRabbit;
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
@@ -11,9 +10,7 @@ import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.rabbit.listener.RabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
-import org.springframework.amqp.rabbit.listener.adapter.MessageListenerAdapter;
 import org.springframework.amqp.rabbit.transaction.RabbitTransactionManager;
-import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.amqp.support.converter.SerializerMessageConverter;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,8 +56,8 @@ public class RabbitConfiguration {
     public ConnectionFactory connectionFactory() {
         CachingConnectionFactory cachingConnectionFactory = new CachingConnectionFactory();
         cachingConnectionFactory.setHost("101.200.63.60");
-        cachingConnectionFactory.setUsername("xx");
-        cachingConnectionFactory.setPassword("xx");
+        cachingConnectionFactory.setUsername("fawzi");
+        cachingConnectionFactory.setPassword("fawzi77.");
         cachingConnectionFactory.setPublisherReturns(true);
         cachingConnectionFactory.setPublisherConfirms(true);
         cachingConnectionFactory.setChannelCacheSize(50);

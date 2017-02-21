@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Import;
  */
 
 @Configuration
-@ComponentScan("cn.fawzi.thymeleaf")
+@ComponentScan("cn.wenqi.amqp")
 @Import({MvcConfig.class})
 public class BootConfig {
 
