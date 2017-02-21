@@ -82,7 +82,6 @@ public class RabbitConfiguration {
         retryTemplate.setBackOffPolicy(backOffPolicy);
         template.setRetryTemplate(retryTemplate);
         template.setMandatory(true);
-        template.setMessageConverter(new Jackson2JsonMessageConverter());
         return template;
     }
 
@@ -100,15 +99,14 @@ public class RabbitConfiguration {
         factory.setMaxConcurrentConsumers(10);
 //        factory.setMessageConverter(messageConverter());
         factory.setDefaultRequeueRejected(false);//不用无限循环
-        factory.setMessageConverter(new Jackson2JsonMessageConverter());
         return factory;
     }
 
-//    @Bean
-//    MessageConverter messageConverter(){
-//        MessageConverter messageConverter=new SerializerMessageConverter();
-//        return messageConverter;
-//    }
+    @Bean
+    MessageConverter messageConverter(){
+        MessageConverter messageConverter=new SerializerMessageConverter();
+        return messageConverter;
+    }
 
     @Bean
     public SimpleMessageListenerContainer messageListenerContainer() {
