@@ -7,10 +7,8 @@ import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.amqp.rabbit.listener.RabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
 import org.springframework.amqp.rabbit.transaction.RabbitTransactionManager;
-import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.amqp.support.converter.SerializerMessageConverter;
 import org.springframework.context.annotation.Bean;
@@ -63,14 +61,6 @@ public class RabbitConfiguration {
         return new Queue(queueName);
     }
 
-//    public RabbitConnectionFactoryBean clientConnectionFactory() {
-//        RabbitConnectionFactoryBean rabbitConnectionFactoryBean = new RabbitConnectionFactoryBean();
-//        rabbitConnectionFactoryBean.setUseSSL(true);
-//        Resource resource = new PathResource("file:/secrets/rabbitSSL.properties");
-//        rabbitConnectionFactoryBean.setSslPropertiesLocation(resource);
-//        return rabbitConnectionFactoryBean;
-//    }
-
     @Bean
     public AmqpTemplate retryRabbitTemplate() {
         RabbitTemplate template = new RabbitTemplate(connectionFactory());
@@ -97,7 +87,7 @@ public class RabbitConfiguration {
         factory.setConnectionFactory(connectionFactory());
         factory.setConcurrentConsumers(3);
         factory.setMaxConcurrentConsumers(10);
-//        factory.setMessageConverter(messageConverter());
+        factory.setMessageConverter(messageConverter());
         factory.setDefaultRequeueRejected(false);//不用无限循环
         return factory;
     }

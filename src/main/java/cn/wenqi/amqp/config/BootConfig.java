@@ -10,7 +10,7 @@ import org.springframework.context.annotation.Import;
 
 @Configuration
 @ComponentScan("cn.wenqi.amqp")
-@Import({MvcConfig.class})
+@Import({MvcConfig.class,RabbitConfiguration.class,MvcConfig.class})
 public class BootConfig {
 
 }
