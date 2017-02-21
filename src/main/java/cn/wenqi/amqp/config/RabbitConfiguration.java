@@ -1,6 +1,5 @@
 package cn.wenqi.amqp.config;
 
-import cn.wenqi.amqp.service.OrderService;
 import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.annotation.EnableRabbit;
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
@@ -11,9 +10,9 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.rabbit.listener.RabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
 import org.springframework.amqp.rabbit.transaction.RabbitTransactionManager;
+import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.amqp.support.converter.SerializerMessageConverter;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.retry.backoff.ExponentialBackOffPolicy;
@@ -33,25 +32,10 @@ public class RabbitConfiguration {
      * Listing permissions in vhost "/" ...
         fawzi	^fawzi-.*	.*	.*
      */
-    public final static String queueName="fawzi-sendEmail";
-
-    public final static String orderQueueName="fawzi-order";
+    public final static String queueName ="fawzi-do-mq";
 
     public final static String exchange="fawzi-direct-exchange";
 
-
-    @Autowired
-    private OrderService orderService;
-
-//    @Configuration
-//    static class RabbitListener{
-//
-//        @Bean
-//        public OrderService orderService(){
-//            return new OrderServiceImpl();
-//        }
-//
-//    }
     @Bean
     public ConnectionFactory connectionFactory() {
         CachingConnectionFactory cachingConnectionFactory = new CachingConnectionFactory();
@@ -75,13 +59,8 @@ public class RabbitConfiguration {
     }
 
     @Bean
-    public Queue testQueue() {
-        return new Queue(queueName);
-    }
-
-    @Bean
     public Queue orderQueue(){
-        return new Queue(orderQueueName);
+        return new Queue(queueName);
     }
 
 //    public RabbitConnectionFactoryBean clientConnectionFactory() {
@@ -102,6 +81,8 @@ public class RabbitConfiguration {
         backOffPolicy.setMaxInterval(10000);
         retryTemplate.setBackOffPolicy(backOffPolicy);
         template.setRetryTemplate(retryTemplate);
+        template.setMandatory(true);
+        template.setMessageConverter(new Jackson2JsonMessageConverter());
         return template;
     }
 
@@ -112,26 +93,28 @@ public class RabbitConfiguration {
     }
 
     @Bean
-    public RabbitListenerContainerFactory rabbitListenerContainerFactory() {
+    public SimpleRabbitListenerContainerFactory rabbitListenerContainerFactory() {
         SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
         factory.setConnectionFactory(connectionFactory());
         factory.setConcurrentConsumers(3);
         factory.setMaxConcurrentConsumers(10);
-        factory.setMessageConverter(messageConverter());
+//        factory.setMessageConverter(messageConverter());
+        factory.setDefaultRequeueRejected(false);//不用无限循环
+        factory.setMessageConverter(new Jackson2JsonMessageConverter());
         return factory;
     }
 
-    @Bean
-    MessageConverter messageConverter(){
-        MessageConverter messageConverter=new SerializerMessageConverter();
-        return messageConverter;
-    }
+//    @Bean
+//    MessageConverter messageConverter(){
+//        MessageConverter messageConverter=new SerializerMessageConverter();
+//        return messageConverter;
+//    }
 
     @Bean
     public SimpleMessageListenerContainer messageListenerContainer() {
         SimpleMessageListenerContainer container = new SimpleMessageListenerContainer();
         container.setConnectionFactory(connectionFactory());
-        container.setQueueNames(queueName,orderQueueName);
+        container.setQueueNames(queueName);
         //container.setMessageListener(new MessageListenerAdapter(orderService));
         container.setConsumerArguments(Collections.singletonMap("x-priority", Integer.valueOf(10)));
         return container;
@@ -158,6 +141,6 @@ public class RabbitConfiguration {
 
     @Bean
     Binding binding(Queue orderQueue, DirectExchange directExchange) {
-        return BindingBuilder.bind(orderQueue).to(directExchange).with(orderQueueName);
+        return BindingBuilder.bind(orderQueue).to(directExchange).with(queueName);
     }
 }
