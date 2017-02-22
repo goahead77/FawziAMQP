@@ -34,16 +34,16 @@ public class MQServiceTest extends TestBase{
         ObjectMapper objectMapper=new ObjectMapper();
         String json=objectMapper.writeValueAsString(mqEntity);
         rabbitTemplate.convertAndSend(RabbitConfiguration.exchange,RabbitConfiguration.queueName,json);
-        rabbitTemplate.setConfirmCallback(new RabbitTemplate.ConfirmCallback() {
-            @Override
-            public void confirm(CorrelationData correlationData, boolean ack, String cause) {
-                System.out.println("confirm");
-            }
-        });
-        rabbitTemplate.setReturnCallback((message, replyCode, replyText, exchange, routingKey) -> {
-            log.info(replyText);
-            log.info(replyCode);
-        });
+//        rabbitTemplate.setConfirmCallback(new RabbitTemplate.ConfirmCallback() {
+//            @Override
+//            public void confirm(CorrelationData correlationData, boolean ack, String cause) {
+//                System.out.println("confirm");
+//            }
+//        });
+//        rabbitTemplate.setReturnCallback((message, replyCode, replyText, exchange, routingKey) -> {
+//            log.info(replyText);
+//            log.info(replyCode);
+//        });
     }
 
 }

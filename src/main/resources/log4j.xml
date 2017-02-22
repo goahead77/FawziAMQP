@@ -17,12 +17,12 @@
         </layout>
     </appender>
     <root>
-        <level value="info"/>
+        <level value="debug"/>
         <appender-ref ref="ServerDailyRollingFile"/>
         <appender-ref ref="stdout"/>
     </root>
-    <logger name="cn.wenqi.web">
-        <level value="${log4j.wenqi.web}"/>
+    <logger name="cn.wenqi.amqp">
+        <level value="${log4j.wenqi.amqp}"/>
     </logger>
     <logger name="org.springframework.messaging">
         <level value="${log4j.org.springframework.messaging}"/>

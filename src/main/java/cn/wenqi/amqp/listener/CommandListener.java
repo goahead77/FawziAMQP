@@ -16,7 +16,6 @@ import org.springframework.util.StringUtils;
  */
 
 @Component
-
 public class CommandListener {
     private static final Log log= LogFactory.getLog(CommandListener.class);
 

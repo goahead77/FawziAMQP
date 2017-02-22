@@ -8,6 +8,7 @@ import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
+import org.springframework.amqp.rabbit.support.CorrelationData;
 import org.springframework.amqp.rabbit.transaction.RabbitTransactionManager;
 import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.amqp.support.converter.SerializerMessageConverter;
@@ -53,7 +54,10 @@ public class RabbitConfiguration {
 
     @Bean
     public RabbitTemplate rabbitTemplate() {
-        return new RabbitTemplate(connectionFactory());
+        RabbitTemplate rabbitTemplate=new RabbitTemplate(connectionFactory());
+        rabbitTemplate.setConfirmCallback((correlationData, ack, cause) -> System.out.println("confirm:"+correlationData+";"+ack+";"+cause));
+        rabbitTemplate.setReturnCallback((message, replyCode, replyText, exchange1, routingKey) -> System.out.println("return"));
+        return rabbitTemplate;
     }
 
     @Bean
@@ -103,7 +107,7 @@ public class RabbitConfiguration {
         SimpleMessageListenerContainer container = new SimpleMessageListenerContainer();
         container.setConnectionFactory(connectionFactory());
         container.setQueueNames(queueName);
-        //container.setMessageListener(new MessageListenerAdapter(orderService));
+//        container.setMessageListener(new MessageListenerAdapter(orderService));
         container.setConsumerArguments(Collections.singletonMap("x-priority", Integer.valueOf(10)));
         return container;
     }
